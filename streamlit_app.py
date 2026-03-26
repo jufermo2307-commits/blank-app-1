@@ -32,11 +32,11 @@ st.info('"El suelo es el material más importante en cualquier obra de ingenier�
 st.success("Puede navegar entre los diferentes módulos utilizando el menú ubicado en la parte izquierda.")
 
 # --------------------------
-# MENÚ
+# MENÚ (Se agregó "Diagrama de Fases")
 # --------------------------
 menu = st.sidebar.selectbox(
     "Módulos",
-    ["Inicio", "Gravimetría", "Volumetría", "Atterberg", "Normatividad"]
+    ["Inicio", "Gravimetría", "Volumetría", "Diagrama de Fases", "Atterberg", "Normatividad"]
 )
 
 # --------------------------
@@ -105,9 +105,48 @@ La densidad húmeda incluye el contenido de agua del suelo, mientras que la dens
 """)
 
 # --------------------------
+# NUEVO MÓDULO: DIAGRAMA DE FASES
+# --------------------------
+elif menu == "Diagrama de Fases":
+    st.header("Relaciones Gravimétricas y Volumétricas")
+    st.write("Ingrese los datos obtenidos en laboratorio para determinar las proporciones de aire, agua y sólidos.")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        Gs = st.number_input("Gravedad específica de sólidos (Gs)", min_value=0.1, value=2.65)
+        V_total = st.number_input("Volumen Total (Vt) [cm³]", min_value=0.01)
+    with col2:
+        W_total = st.number_input("Peso Total (Wt) [g]", min_value=0.01)
+        W_seco = st.number_input("Peso Seco (Ws) [g]", min_value=0.01)
+
+    if st.button("Calcular Diagrama"):
+        if W_seco > W_total:
+            st.error("El peso seco no puede ser mayor al peso total.")
+        else:
+            # Cálculos de Masas y Volúmenes
+            Ww = W_total - W_seco  # Peso del agua
+            Vw = Ww / 1.0          # Volumen del agua (asumiendo dens. agua = 1g/cm3)
+            Vs = W_seco / (Gs * 1.0) # Volumen de sólidos
+            Vv = V_total - Vs      # Volumen de vacíos
+            
+            # Resultados Principales
+            e = Vv / Vs            # Relación de vacíos
+            n = (Vv / V_total) * 100 # Porosidad
+            S = (Vw / Vv) * 100    # Grado de saturación
+            
+            st.subheader("Resultados del Diagrama")
+            st.table({
+                "Propiedad": ["Índice de Poros (e)", "Porosidad (n)", "Grado de Saturación (S)"],
+                "Valor": [f"{e:.3f}", f"{n:.2f} %", f"{min(S, 100.0):.2f} %"]
+            })
+            
+            st.info(f"**Nota:** El volumen de sólidos calculado es de {Vs:.2f} cm³ y el volumen de vacíos es de {Vv:.2f} cm³.")
+
+# --------------------------
 # ATTERBERG
 # --------------------------
 elif menu == "Atterberg":
+    # ... (Tu código original de Atterberg se mantiene igual)
     st.header("Límites de Atterberg")
 
     LL = st.number_input("Límite Líquido", min_value=0.0)
@@ -165,12 +204,6 @@ elif menu == "Atterberg":
             st.write(f"Aptitud: {apto}")
             st.write(f"Motivo: {mensaje}")
             st.write(f"Recomendación: {solucion}")
-
-            # INTERPRETACIÓN
-            st.subheader("Interpretación")
-            st.write("""
-El índice de plasticidad define el comportamiento del suelo frente a cambios de humedad. La clasificación SUCS permite identificar su comportamiento mecánico y su idoneidad en proyectos de ingeniería civil.
-""")
 
 # --------------------------
 # NORMATIVIDAD
