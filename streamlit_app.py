@@ -5,12 +5,9 @@ import streamlit as st
 # --------------------------
 st.set_page_config(page_title="Mecánica de Suelos", layout="centered")
 
-# ESTILO PERSONALIZADO
 st.markdown("""
 <style>
-h1, h2, h3 {
-    color: #1f4e79;
-}
+h1, h2, h3 {color: #1f4e79;}
 .stButton>button {
     background-color: #1f4e79;
     color: white;
@@ -19,288 +16,254 @@ h1, h2, h3 {
 </style>
 """, unsafe_allow_html=True)
 
-# LOGO
-st.image("logo_upb.png", width=180)
-
-# MENSAJE INICIAL
-st.warning("Esta es una aplicación BETA en fase de prueba, desarrollada por los estudiantes Juan Fernando Monterrosa y Jannier Navarro de Ingeniería Civil de la Universidad Pontificia Bolivariana.")
-
 st.title("Aplicación de Mecánica de Suelos")
 
-st.info('"El suelo es el material más importante en cualquier obra de ingeniería." - Karl Terzaghi')
-
-st.success("Puede navegar entre los diferentes módulos utilizando el menú ubicado en la parte izquierda.")
-
 # --------------------------
-# MENÚ (Se agregó "Diagrama de Fases")
+# MENÚ
 # --------------------------
 menu = st.sidebar.selectbox(
     "Módulos",
-    ["Inicio", "Gravimetría", "Volumetría", "Diagrama de Fases", "Atterberg", "Normatividad"]
+    ["Inicio", "Gravimetría", "Volumetría", "Atterberg", "Resolución de problemas complejos"]
 )
 
 # --------------------------
 # INICIO
 # --------------------------
 if menu == "Inicio":
-    st.header("Descripción")
-    st.write("""
-Esta aplicación permite calcular propiedades básicas de suelos utilizadas en ingeniería civil, tales como contenido de humedad, densidad y límites de Atterberg, además de realizar una clasificación del suelo y evaluar su aptitud para construcción.
+
+    st.title("Calculadora de Suelos")
+
+    st.info("""
+Esta es una aplicación de calculadora en formato beta, desarrollada por los estudiantes de Ingeniería Civil de la Universidad Pontificia Bolivariana:
+
+- Juan Fernando Monterrosa  
+- Jannier David Navarro Martínez
 """)
 
+    st.success("""
+En el menú ubicado a la izquierda encontrarás los diferentes modos para usar la calculadora.
+""")
+
+    st.markdown("---")
+
+    st.header("Descripción")
+    st.write("""
+Esta aplicación permite realizar cálculos geotécnicos fundamentales como:
+
+- Contenido de humedad  
+- Densidades del suelo  
+- Relaciones de fase  
+- Límites de Atterberg  
+
+Además, incluye un módulo avanzado para resolver automáticamente problemas complejos de mecánica de suelos a partir de diferentes combinaciones de datos.
+""")
 # --------------------------
 # GRAVIMETRÍA
 # --------------------------
 elif menu == "Gravimetría":
-    st.header("Contenido de Humedad")
 
     w_humedo = st.number_input("Peso húmedo (g)", min_value=0.0)
     w_seco = st.number_input("Peso seco (g)", min_value=0.0)
 
-    if st.button("Calcular"):
+    if st.button("Calcular humedad"):
         if w_seco == 0:
-            st.error("El peso seco debe ser mayor que cero.")
-        elif w_humedo < w_seco:
-            st.error("El peso húmedo no puede ser menor que el peso seco.")
+            st.error("El peso seco no puede ser cero.")
         else:
             humedad = ((w_humedo - w_seco) / w_seco) * 100
-
-            st.subheader("Resultados")
-            st.table({
-                "Parámetro": ["Peso húmedo", "Peso seco", "Humedad"],
-                "Valor": [w_humedo, w_seco, f"{humedad:.2f} %"]
-            })
-
-            st.subheader("Interpretación")
-            st.write("""
-El contenido de humedad representa la cantidad de agua presente en el suelo respecto a su peso seco. Valores elevados pueden indicar suelos blandos o saturados, mientras que valores bajos corresponden a materiales más estables.
-""")
+            st.success(f"Humedad = {humedad:.2f} %")
 
 # --------------------------
 # VOLUMETRÍA
 # --------------------------
 elif menu == "Volumetría":
-    st.header("Densidad del Suelo")
 
     peso = st.number_input("Peso (g)", min_value=0.0)
     volumen = st.number_input("Volumen (cm³)", min_value=0.0)
     humedad = st.number_input("Humedad (%)", min_value=0.0)
 
-    if st.button("Calcular"):
+    if st.button("Calcular densidades"):
         if volumen == 0:
-            st.error("El volumen debe ser mayor que cero.")
+            st.error("Volumen no puede ser cero")
         else:
             gamma = peso / volumen
             gamma_d = gamma / (1 + humedad/100)
 
-            st.subheader("Resultados")
-            st.table({
-                "Parámetro": ["Densidad húmeda", "Densidad seca"],
-                "Valor": [f"{gamma:.2f}", f"{gamma_d:.2f}"]
-            })
-
-            st.subheader("Interpretación")
-            st.write("""
-La densidad húmeda incluye el contenido de agua del suelo, mientras que la densidad seca permite evaluar su grado de compactación. Valores altos de densidad seca indican mejores condiciones estructurales.
-""")
-
-# --------------------------
-# NUEVO MÓDULO: DIAGRAMA DE FASES
-# --------------------------
-elif menu == "Diagrama de Fases":
-    st.header("Relaciones Gravimétricas y Volumétricas")
-    st.write("Ingrese los datos obtenidos en laboratorio para determinar las proporciones de aire, agua y sólidos.")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        Gs = st.number_input("Gravedad específica de sólidos (Gs)", min_value=0.1, value=2.65)
-        V_total = st.number_input("Volumen Total (Vt) [cm³]", min_value=0.01)
-    with col2:
-        W_total = st.number_input("Peso Total (Wt) [g]", min_value=0.01)
-        W_seco = st.number_input("Peso Seco (Ws) [g]", min_value=0.01)
-
-    if st.button("Calcular Diagrama"):
-        if W_seco > W_total:
-            st.error("El peso seco no puede ser mayor al peso total.")
-        else:
-            # Cálculos de Masas y Volúmenes
-            Ww = W_total - W_seco  # Peso del agua
-            Vw = Ww / 1.0          # Volumen del agua (asumiendo dens. agua = 1g/cm3)
-            Vs = W_seco / (Gs * 1.0) # Volumen de sólidos
-            Vv = V_total - Vs      # Volumen de vacíos
-            
-            # Resultados Principales
-            e = Vv / Vs            # Relación de vacíos
-            n = (Vv / V_total) * 100 # Porosidad
-            S = (Vw / Vv) * 100    # Grado de saturación
-            
-            st.subheader("Resultados del Diagrama")
-            st.table({
-                "Propiedad": ["Índice de Poros (e)", "Porosidad (n)", "Grado de Saturación (S)"],
-                "Valor": [f"{e:.3f}", f"{n:.2f} %", f"{min(S, 100.0):.2f} %"]
-            })
-            
-            st.info(f"**Nota:** El volumen de sólidos calculado es de {Vs:.2f} cm³ y el volumen de vacíos es de {Vv:.2f} cm³.")
+            st.success(f"γ húmeda = {gamma:.3f}")
+            st.success(f"γ seca = {gamma_d:.3f}")
 
 # --------------------------
 # ATTERBERG
 # --------------------------
 elif menu == "Atterberg":
-    # ... (Tu código original de Atterberg se mantiene igual)
-    st.header("Límites de Atterberg")
 
-    LL = st.number_input("Límite Líquido", min_value=0.0)
-    LP = st.number_input("Límite Plástico", min_value=0.0)
+    LL = st.number_input("Límite líquido", min_value=0.0)
+    LP = st.number_input("Límite plástico", min_value=0.0)
 
     if st.button("Calcular"):
         if LP > LL:
-            st.error("El límite plástico no puede ser mayor que el límite líquido.")
+            st.error("LP no puede ser mayor que LL")
         else:
             IP = LL - LP
-            A_line = 0.73 * (LL - 20)
-
-            # Clasificación
-            if LL < 50:
-                if IP >= A_line:
-                    clasificacion = "CL (Arcilla de baja plasticidad)"
-                else:
-                    clasificacion = "ML (Limo)"
-            else:
-                if IP >= A_line:
-                    clasificacion = "CH (Arcilla de alta plasticidad)"
-                else:
-                    clasificacion = "MH (Limo de alta plasticidad)"
-
-            # Aptitud
-            if "CL" in clasificacion:
-                apto = "Moderadamente apto"
-                mensaje = "Puede presentar cambios volumétricos."
-                solucion = "Control de humedad y compactación adecuada."
-
-            elif "CH" in clasificacion:
-                apto = "No apto"
-                mensaje = "Alta compresibilidad y expansividad."
-                solucion = "Estabilización con cal o reemplazo del suelo."
-
-            elif "ML" in clasificacion:
-                apto = "Poco apto"
-                mensaje = "Baja cohesión y sensibilidad al agua."
-                solucion = "Mejorar drenaje y compactación."
-
-            else:
-                apto = "No apto"
-                mensaje = "Baja resistencia estructural."
-                solucion = "Estabilización o sustitución del suelo."
-
-            # RESULTADOS
-            st.subheader("Resultados")
-            st.table({
-                "Parámetro": ["LL", "LP", "IP", "Clasificación"],
-                "Valor": [LL, LP, f"{IP:.2f}", clasificacion]
-            })
-
-            # EVALUACIÓN
-            st.subheader("Evaluación para construcción")
-            st.write(f"Aptitud: {apto}")
-            st.write(f"Motivo: {mensaje}")
-            st.write(f"Recomendación: {solucion}")
+            st.success(f"Índice de plasticidad = {IP:.2f}")
 
 # --------------------------
-# NORMATIVIDAD
+# MÓDULO AVANZADO
 # --------------------------
-elif menu == "Normatividad":
-    st.header("Normatividad Colombiana e Internacional en Mecánica de Suelos")
+elif menu == "Resolución de problemas complejos":
 
-    st.write("""
-La caracterización de suelos en Colombia se rige principalmente por las especificaciones del Instituto Nacional de Vías (INVIAS) y las Normas Técnicas Colombianas (NTC), complementadas con estándares internacionales como ASTM y AASHTO. Estas normas establecen procedimientos estandarizados para la ejecución de ensayos de laboratorio y campo, garantizando la confiabilidad de los resultados en estudios geotécnicos.
+    st.header("Relaciones de Fase - Modo Laboratorio")
 
-------------------------------
- CONTENIDO DE HUMEDAD
-------------------------------
-* INV E-122: Determinación del contenido de agua (humedad) mediante secado en horno.  
-* ASTM D2216: Standard Test Methods for Laboratory Determination of Water Content of Soil and Rock.
+    st.info("Puedes ingresar datos de laboratorio o teóricos. El sistema resolverá automáticamente.")
 
-Este ensayo permite conocer la cantidad de agua presente en el suelo, parámetro fundamental para evaluar su comportamiento mecánico.
+    # --------------------------
+    # PESOS
+    # --------------------------
+    Ws = st.number_input("Ws - Peso seco / sólidos (g)", 0.0)
+    Ww = st.number_input("Ww - Peso agua (g)", 0.0)
+    W = st.number_input("W - Peso total (g)", 0.0)
 
-------------------------------
- LÍMITES DE ATTERBERG
-------------------------------
-* INV E-125: Determinación del límite líquido.  
-* INV E-126: Determinación del límite plástico.  
-* ASTM D4318: Standard Test Methods for Liquid Limit, Plastic Limit, and Plasticity Index of Soils.
+    W_h = st.number_input("Peso muestra húmeda (g)", 0.0)
+    W_s = st.number_input("Peso muestra seca (g)", 0.0)
 
-Estos ensayos permiten determinar el comportamiento plástico del suelo y son esenciales para su clasificación mediante el sistema SUCS.
+    # --------------------------
+    # VOLÚMENES
+    # --------------------------
+    Vs = st.number_input("Vs - Volumen sólidos (cm³)", 0.0)
+    Vw = st.number_input("Vw - Volumen agua (cm³)", 0.0)
+    Vv = st.number_input("Vv - Volumen vacíos (cm³)", 0.0)
+    V = st.number_input("V - Volumen total (cm³)", 0.0)
 
-------------------------------
- ANÁLISIS GRANULOMÉTRICO
-------------------------------
-* INV E-123: Análisis granulométrico por tamizado.  
-* INV E-124: Análisis granulométrico por hidrómetro.  
-* ASTM D6913: Particle Size Distribution (Sieve Analysis).  
-* ASTM D7928: Particle Size Distribution (Hydrometer Analysis).
+    V_h = st.number_input("Volumen muestra húmeda (cm³)", 0.0)
+    V_s = st.number_input("Volumen muestra seca (cm³)", 0.0)
 
-Permiten conocer la distribución de tamaños de partículas del suelo, lo cual es clave para su clasificación y comportamiento hidráulico.
+    # --------------------------
+    # PROPIEDADES
+    # --------------------------
+    Gs = st.number_input("Gs - Gravedad específica", 0.0)
+    w = st.number_input("w - Humedad (%)", 0.0)
+    S_input = st.number_input("S - Grado de saturación (%)", 0.0)
 
-------------------------------
- PESO ESPECÍFICO Y DENSIDAD
-------------------------------
-* INV E-128: Determinación del peso específico de los sólidos.  
-* ASTM D854: Specific Gravity of Soil Solids.  
+    if st.button("Resolver sistema"):
 
-* INV E-142: Determinación de la densidad en laboratorio.  
-* ASTM D7263: Laboratory Determination of Density.
+        # Conversión
+        w = w/100 if w != 0 else None
+        S_input = S_input/100 if S_input != 0 else None
 
-Estos ensayos permiten evaluar la relación entre masa y volumen del suelo, fundamental en estudios de compactación y resistencia.
+        # NORMALIZACIÓN
+        data = {
+            "Ws": Ws if Ws != 0 else (W_s if W_s != 0 else None),
+            "Ww": Ww if Ww != 0 else None,
+            "W": W if W != 0 else (W_h if W_h != 0 else None),
+            "Vs": Vs if Vs != 0 else None,
+            "Vw": Vw if Vw != 0 else None,
+            "Vv": Vv if Vv != 0 else None,
+            "V": V if V != 0 else (V_h if V_h != 0 else None),
+            "Gs": Gs if Gs != 0 else None,
+            "w": w,
+            "S": S_input
+        }
 
-------------------------------
- ENSAYOS DE COMPACTACIÓN
-------------------------------
-* INV E-141: Ensayo Proctor estándar.  
-* INV E-142: Ensayo Proctor modificado.  
-* ASTM D698: Standard Proctor Test.  
-* ASTM D1557: Modified Proctor Test.
+        # --------------------------
+        # MOTOR ITERATIVO
+        # --------------------------
+        for _ in range(15):
 
-Permiten determinar la relación óptima entre humedad y densidad para lograr una adecuada compactación del suelo.
+            # PESOS
+            if data["W"] is None and data["Ws"] and data["Ww"]:
+                data["W"] = data["Ws"] + data["Ww"]
 
-------------------------------
- RESISTENCIA DEL SUELO
-------------------------------
-* INV E-152: Ensayo de corte directo.  
-* ASTM D3080: Direct Shear Test.  
+            if data["Ww"] is None and data["W"] and data["Ws"]:
+                data["Ww"] = data["W"] - data["Ws"]
 
-* INV E-153: Ensayo de compresión inconfinada.  
-* ASTM D2166: Unconfined Compressive Strength.
+            if data["Ws"] is None and data["W"] and data["Ww"]:
+                data["Ws"] = data["W"] - data["Ww"]
 
-Estos ensayos permiten determinar la resistencia al corte y la capacidad del suelo para soportar cargas.
+            # HUMEDAD
+            if data["w"] is None and data["Ww"] and data["Ws"]:
+                data["w"] = data["Ww"] / data["Ws"]
 
-------------------------------
- CONSOLIDACIÓN
-------------------------------
-* INV E-154: Ensayo de consolidación unidimensional.  
-* ASTM D2435: One-Dimensional Consolidation Test.
+            if data["Ww"] is None and data["w"] and data["Ws"]:
+                data["Ww"] = data["w"] * data["Ws"]
 
-Permite evaluar asentamientos del suelo bajo cargas a lo largo del tiempo.
+            # VOLÚMENES
+            if data["V"] is None and data["Vs"] and data["Vv"]:
+                data["V"] = data["Vs"] + data["Vv"]
 
-------------------------------
- PERMEABILIDAD
-------------------------------
-* INV E-130: Ensayo de permeabilidad en laboratorio.  
-* ASTM D2434: Permeability Test.
+            if data["Vv"] is None and data["V"] and data["Vs"]:
+                data["Vv"] = data["V"] - data["Vs"]
 
-Determina la capacidad del suelo para permitir el paso del agua, fundamental en drenajes y estabilidad.
+            if data["Vs"] is None and data["V"] and data["Vv"]:
+                data["Vs"] = data["V"] - data["Vv"]
 
-------------------------------
- CLASIFICACIÓN DE SUELOS
-------------------------------
-* Sistema SUCS (Unified Soil Classification System).  
-* AASHTO M145: Clasificación de suelos para carreteras.
+            # RELACIÓN CON Gs
+            if data["Vs"] is None and data["Ws"] and data["Gs"]:
+                data["Vs"] = data["Ws"] / data["Gs"]
 
-Estos sistemas permiten categorizar los suelos según sus propiedades físicas y mecánicas.
+            if data["Gs"] is None and data["Ws"] and data["Vs"]:
+                data["Gs"] = data["Ws"] / data["Vs"]
 
-------------------------------
- IMPORTANCIA EN INGENIERÍA
-------------------------------
-El cumplimiento de estas normas garantiza resultados confiables en estudios geotécnicos, permitiendo diseñar cimentaciones, estructuras y obras civiles seguras. Además, aseguran la estandarización de procedimientos y la comparabilidad de resultados a nivel nacional e internacional.
+            # SATURACIÓN POR VOLUMEN
+            if data["S"] is None and data["Vw"] and data["Vv"]:
+                data["S"] = data["Vw"] / data["Vv"]
 
-El uso adecuado de estas normativas permite prevenir fallas estructurales, optimizar diseños y garantizar la estabilidad de las obras en función de las condiciones del suelo.
-""")
+            # VOLUMEN DE AGUA DESDE S
+            if data["Vw"] is None and data["S"] and data["Vv"]:
+                data["Vw"] = data["S"] * data["Vv"]
+
+        # --------------------------
+        # RESULTADOS
+        # --------------------------
+        st.subheader("Resultados")
+
+        # Densidades
+        if data["W"] and data["V"]:
+            st.success(f"γ húmeda = {data['W']/data['V']:.4f}")
+        else:
+            st.warning("Falta W o V")
+
+        if data["Ws"] and data["V"]:
+            st.success(f"γ seca = {data['Ws']/data['V']:.4f}")
+        else:
+            st.warning("Falta Ws o V")
+
+        # e
+        if data["Vv"] and data["Vs"]:
+            e = data["Vv"]/data["Vs"]
+            st.success(f"e = {e:.4f}")
+        else:
+            e = None
+            st.warning("No se pudo calcular e")
+
+        # n
+        if data["Vv"] and data["V"]:
+            st.success(f"n = {data['Vv']/data['V']:.4f}")
+        else:
+            st.warning("No se pudo calcular n")
+
+        # humedad
+        if data["w"]:
+            st.success(f"w = {data['w']*100:.2f}%")
+
+        # SATURACIÓN
+        if data["S"]:
+            st.success(f"S = {data['S']*100:.2f}%")
+        elif data["w"] and data["Gs"] and e:
+            S = (data["w"] * data["Gs"]) / e
+            st.success(f"S (calculado) = {S*100:.2f}%")
+        else:
+            st.warning("No se pudo calcular S")
+
+        # VALIDACIÓN
+        st.subheader("Chequeo físico")
+
+        if data["Vw"] and data["Vv"] and data["Vw"] > data["Vv"]:
+            st.error("Vw > Vv → imposible físicamente")
+
+        if data["S"] and data["S"] > 1:
+            st.error("S > 100% → imposible")
+
+        if e and e < 0:
+            st.error("e negativo no es válido")
+
+        st.subheader("Variables calculadas")
+        st.write(data)
